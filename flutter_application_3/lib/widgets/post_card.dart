@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
+
 import '../models/post_model.dart';
+import '../theme/app_theme.dart';
+import 'portada.dart';
+
+/// Separa "Guías, PC" en ["Guías", "PC"].
+List<String> separarTags(String tags) => tags
+    .split(',')
+    .map((t) => t.trim())
+    .where((t) => t.isNotEmpty)
+    .toList();
+
 class PostCard extends StatelessWidget {
   final PostModel post;
   final VoidCallback onTap;
@@ -12,86 +23,102 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final etiquetas = separarTags(post.tags);
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 18),
-      elevation: 4,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+      decoration: BoxDecoration(
+        color: AppColores.superficie,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColores.borde),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (post.imagen.isNotEmpty)
-              Image.network(
-                post.imagen,
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const SizedBox(
-                    height: 110,
-                    child: Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        size: 40,
-                      ),
-                    ),
-                  );
-                },
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          hoverColor: AppColores.acento.withValues(alpha: 0.04),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Portada(
+                url: post.imagen,
+                texto: '${post.tags} ${post.titulo}',
+                semilla: post.id,
+                altura: 170,
               ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (post.tags.isNotEmpty) ...[
-                    Text(
-                      post.tags,
-                      style: const TextStyle(
-                        color: Color(0xFF2196F3),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (etiquetas.isNotEmpty) ...[
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: etiquetas
+                            .map((t) => _Etiqueta(texto: t))
+                            .toList(),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  Text(
-                    post.titulo,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF08245C),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Text(
-                    post.descripcion,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const Row(
-                    children: [
-                      Icon(Icons.article_outlined, size: 18),
-                      SizedBox(width: 5),
-                      Text('Leer publicación'),
+                      const SizedBox(height: 10),
                     ],
-                  ),
-                ],
+                    Text(post.titulo, style: AppTheme.titulo(size: 21)),
+                    const SizedBox(height: 8),
+                    Text(
+                      post.descripcion,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        color: AppColores.textoSuave,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      children: [
+                        Text(
+                          'Leer más',
+                          style: TextStyle(
+                            color: AppColores.acento,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward, size: 16, color: AppColores.acento),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Etiqueta extends StatelessWidget {
+  final String texto;
+
+  const _Etiqueta({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColores.secundario.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        texto.toUpperCase(),
+        style: const TextStyle(
+          color: AppColores.secundario,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
         ),
       ),
     );

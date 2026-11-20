@@ -4,6 +4,7 @@ import '../models/pedido_model.dart';
 import '../models/producto_model.dart';
 import '../services/sesion.dart';
 import '../services/tienda_service.dart';
+import '../theme/app_theme.dart';
 
 class MisPedidosPage extends StatefulWidget {
   const MisPedidosPage({super.key});
@@ -34,7 +35,7 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis pedidos'),
+        title: Text('Mis pedidos', style: AppTheme.titulo(size: 20)),
         actions: [
           IconButton(
             tooltip: 'Actualizar',
@@ -75,7 +76,10 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ExpansionTile(
-                  leading: const CircleAvatar(child: Icon(Icons.receipt)),
+                  leading: const CircleAvatar(
+                    backgroundColor: AppColores.superficieAlta,
+                    child: Icon(Icons.receipt_long, color: AppColores.acento),
+                  ),
                   title: Text('Pedido #${pedido.id}  ·  ${precioTexto(pedido.total)}'),
                   subtitle: Text(
                     '${pedido.fechaLegible}  ·  ${pedido.estatus}  ·  '

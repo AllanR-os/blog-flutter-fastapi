@@ -5,6 +5,7 @@ import '../models/producto_model.dart';
 import '../services/carrito.dart';
 import '../services/sesion.dart';
 import '../services/tienda_service.dart';
+import '../theme/app_theme.dart';
 
 /// Pantalla de pago SIMULADO: no se hace ningún cobro real.
 class PagoPage extends StatefulWidget {
@@ -64,7 +65,7 @@ class _PagoPageState extends State<PagoPage> {
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Colors.green, size: 56),
+          icon: const Icon(Icons.check_circle, color: AppColores.exito, size: 56),
           title: const Text('¡Pago aprobado!'),
           content: Text(
             'Pedido #${pedido.id}\n'
@@ -87,8 +88,11 @@ class _PagoPageState extends State<PagoPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.red[700],
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColores.error,
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+            style: const TextStyle(color: AppColores.fondo),
+          ),
         ),
       );
     } finally {
@@ -109,7 +113,9 @@ class _PagoPageState extends State<PagoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pago')),
+      appBar: AppBar(
+        title: Text('Pago seguro', style: AppTheme.titulo(size: 20)),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
@@ -131,14 +137,21 @@ class _PagoPageState extends State<PagoPage> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.amber[50],
+                          color: AppColores.secundario.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColores.secundario.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: const Text(
                           'Pago simulado: no se realiza ningún cobro.\n'
                           'Aprobada: 4242 4242 4242 4242\n'
                           'Rechazada: 4000 0000 0000 0002',
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.5,
+                            color: AppColores.secundario,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),

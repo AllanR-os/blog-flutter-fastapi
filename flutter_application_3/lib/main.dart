@@ -10,6 +10,7 @@ import 'screens/profile_page.dart';
 import 'screens/register_user_page.dart';
 import 'screens/tienda_page.dart';
 import 'screens/users_page.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const LoginApp());
@@ -22,7 +23,8 @@ class LoginApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Aplicación móvil con FastAPI',
+      title: 'Respawn',
+      theme: AppTheme.oscuro,
       initialRoute: '/login',
       routes: {
         '/login': (context) => const LoginPage(),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-class CategoryChip extends StatelessWidget {
+import '../theme/app_theme.dart';
 
+class CategoryChip extends StatelessWidget {
   final String text;
   final bool selected;
   final VoidCallback onTap;
@@ -15,41 +16,25 @@ class CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    return GestureDetector(
-
+    return InkWell(
       onTap: onTap,
-
-      child: Container(
-
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 9,
-        ),
-
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-
-          color: selected
-              ? const Color(0xFF2196F3)
-              : Colors.grey.shade200,
-
-          borderRadius:
-              BorderRadius.circular(20),
+          color: selected ? AppColores.acento : AppColores.superficie,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: selected ? AppColores.acento : AppColores.borde,
+          ),
         ),
-
         child: Text(
-
           text,
-
           style: TextStyle(
-
-            color: selected
-                ? Colors.white
-                : Colors.black87,
-
-            fontWeight:
-                FontWeight.w500,
+            color: selected ? AppColores.fondo : AppColores.texto,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
           ),
         ),
       ),

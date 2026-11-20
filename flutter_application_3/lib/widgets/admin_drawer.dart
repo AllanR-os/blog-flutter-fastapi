@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/carrito.dart';
 import '../services/sesion.dart';
+import '../theme/app_theme.dart';
 
 class AdminDrawer extends StatelessWidget {
   final Map<String, dynamic> usuario;
@@ -46,14 +47,22 @@ class AdminDrawer extends StatelessWidget {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(color: Color(0xFF08245C)),
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.admin_panel_settings,
-                    color: Color(0xFF08245C), size: 34),
+              decoration: const BoxDecoration(
+                color: AppColores.superficieAlta,
+                border: Border(
+                  bottom: BorderSide(color: AppColores.acento, width: 2),
+                ),
               ),
-              accountName: Text(nombre),
-              accountEmail: Text(correo),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: AppColores.acento,
+                child: Icon(Icons.admin_panel_settings,
+                    color: AppColores.fondo, size: 34),
+              ),
+              accountName: Text(nombre, style: AppTheme.titulo(size: 18)),
+              accountEmail: Text(
+                correo,
+                style: const TextStyle(color: AppColores.textoSuave),
+              ),
             ),
             _opcion(context, Icons.people_alt_outlined, 'Gestión de usuarios',
                 '/users'),
@@ -69,9 +78,9 @@ class AdminDrawer extends StatelessWidget {
             const Spacer(),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: const Icon(Icons.logout, color: AppColores.error),
               title: const Text('Cerrar sesión',
-                  style: TextStyle(color: Colors.red)),
+                  style: TextStyle(color: AppColores.error)),
               onTap: () {
                 Sesion.cerrar();
                 Carrito.instancia.vaciar();
@@ -96,7 +105,7 @@ class AdminDrawer extends StatelessWidget {
     final seleccionado = ruta == rutaActual;
     return ListTile(
       leading: Icon(icono,
-          color: seleccionado ? const Color(0xFF08245C) : null),
+          color: seleccionado ? AppColores.acento : null),
       title: Text(titulo),
       selected: seleccionado,
       onTap: () => _navegar(context, ruta),

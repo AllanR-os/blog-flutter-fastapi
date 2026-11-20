@@ -5,6 +5,7 @@ import '../widgets/auth_card.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
 import '../services/sesion.dart';
+import '../theme/app_theme.dart';
 
 class LoginPage extends StatefulWidget {
 
@@ -125,32 +126,13 @@ class _LoginPageState
 
               children: [
 
-                const Icon(
-                  Icons.lock,
-                  size: 65,
-                  color:
-                      Color(0xFFC9A227),
-                ),
-
-                const SizedBox(
-                  height: 15,
-                ),
-
+                const _Logo(),
+                const SizedBox(height: 6),
                 const Text(
-                  'INICIAR SESIÓN',
-
-                  style: TextStyle(
-                    fontSize: 27,
-                    fontWeight:
-                        FontWeight.bold,
-                    color:
-                        Color(0xFF08245C),
-                  ),
+                  'Inicia sesión para continuar',
+                  style: TextStyle(color: AppColores.textoSuave),
                 ),
-
-                const SizedBox(
-                  height: 25,
-                ),
+                const SizedBox(height: 28),
 
                 CustomTextField(
                   controller:
@@ -266,6 +248,30 @@ class _LoginPageState
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Logo de la app: control + nombre.
+class _Logo extends StatelessWidget {
+  const _Logo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppColores.acento,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.sports_esports, color: AppColores.fondo, size: 28),
+        ),
+        const SizedBox(width: 12),
+        Text(AppTheme.nombreApp, style: AppTheme.titulo(size: 32)),
+      ],
     );
   }
 }

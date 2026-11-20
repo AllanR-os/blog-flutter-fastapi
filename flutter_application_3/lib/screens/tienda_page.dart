@@ -4,6 +4,8 @@ import '../models/producto_model.dart';
 import '../services/carrito.dart';
 import '../services/sesion.dart';
 import '../services/tienda_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/portada.dart';
 
 class TiendaPage extends StatefulWidget {
   const TiendaPage({super.key});
@@ -57,10 +59,10 @@ class _TiendaPageState extends State<TiendaPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tienda'),
+            Text('Tienda', style: AppTheme.titulo(size: 20)),
             Text(
-              'Hola, ${Sesion.nombre}',
-              style: const TextStyle(fontSize: 12),
+              'Equípate, ${Sesion.nombre}',
+              style: const TextStyle(fontSize: 12, color: AppColores.textoSuave),
             ),
           ],
         ),
@@ -162,19 +164,22 @@ class _TarjetaProducto extends StatelessWidget {
     final agotado = producto.stock <= 0;
 
     return Card(
+      elevation: 0,
+      color: AppColores.superficie,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppColores.borde),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: producto.img == null || producto.img!.isEmpty
-                ? const _ImagenVacia()
-                : Image.network(
-                    producto.img!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) =>
-                        const _ImagenVacia(),
-                  ),
+            child: Portada(
+              url: producto.img,
+              texto: producto.nombre,
+              semilla: producto.id,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
@@ -185,14 +190,14 @@ class _TarjetaProducto extends StatelessWidget {
                   producto.nombre,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: AppTheme.titulo(size: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   precioTexto(producto.precio),
                   style: const TextStyle(
                     fontSize: 18,
-                    color: Color(0xFF08245C),
+                    color: AppColores.acento,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -200,7 +205,7 @@ class _TarjetaProducto extends StatelessWidget {
                   agotado ? 'Agotado' : 'Disponibles: ${producto.stock}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: agotado ? Colors.red : Colors.grey[700],
+                    color: agotado ? AppColores.error : AppColores.textoSuave,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -225,18 +230,6 @@ class _TarjetaProducto extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ImagenVacia extends StatelessWidget {
-  const _ImagenVacia();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey[200],
-      child: const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
     );
   }
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-class CustomTextField extends StatelessWidget {
+import '../theme/app_theme.dart';
 
+class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData prefixIcon;
@@ -21,25 +22,28 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    OutlineInputBorder borde(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: color),
+        );
 
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-
+      style: const TextStyle(color: AppColores.texto),
+      cursorColor: AppColores.acento,
       decoration: InputDecoration(
         labelText: label,
-
-        prefixIcon: Icon(
-          prefixIcon,
-        ),
-
+        labelStyle: const TextStyle(color: AppColores.textoSuave),
+        floatingLabelStyle: const TextStyle(color: AppColores.acento),
+        prefixIcon: Icon(prefixIcon, color: AppColores.textoSuave),
         suffixIcon: suffixIcon,
-
-        border: OutlineInputBorder(
-          borderRadius:
-              BorderRadius.circular(6),
-        ),
+        filled: true,
+        fillColor: AppColores.fondo,
+        enabledBorder: borde(AppColores.borde),
+        focusedBorder: borde(AppColores.acento),
+        border: borde(AppColores.borde),
       ),
     );
   }

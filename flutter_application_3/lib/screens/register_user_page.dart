@@ -7,6 +7,7 @@ import '../widgets/auth_background.dart';
 import '../widgets/auth_card.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
+import '../theme/app_theme.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({
@@ -139,18 +140,22 @@ class _RegisterPageState extends State<RegisterPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.person_add,
-                    size: 65,
-                    color: Color(0xFF2196F3),
+                    Icons.person_add_alt_1,
+                    size: 48,
+                    color: AppColores.acento,
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 12),
                   Text(
-                    esAdmin ? 'REGISTRAR USUARIO' : 'CREAR CUENTA',
-                    style: const TextStyle(
-                      fontSize: 27,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF08245C),
-                    ),
+                    esAdmin ? 'Registrar jugador' : 'Únete a Respawn',
+                    style: AppTheme.titulo(size: 26),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    esAdmin
+                        ? 'Crea una cuenta de administrador o general'
+                        : 'Crea tu cuenta para comentar y comprar',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColores.textoSuave),
                   ),
                   const SizedBox(height: 25),
                   CustomTextField(
@@ -184,7 +189,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       'Tipo de usuario',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF08245C),
+                        color: AppColores.textoSuave,
                       ),
                     ),
                     const SizedBox(height: 8),

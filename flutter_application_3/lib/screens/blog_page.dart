@@ -6,6 +6,8 @@ import '../services/sesion.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_page.dart';
 import '../widgets/admin_drawer.dart';
+import '../widgets/category_chip.dart';
+import '../theme/app_theme.dart';
 
 class BlogPage extends StatefulWidget {
   const BlogPage({super.key});
@@ -20,6 +22,7 @@ class _BlogPageState extends State<BlogPage> {
   String nombreUsuario = 'Usuario';
   Map<String, dynamic> usuarioActual = {'nom_usr': 'Usuario', 'mail': '', 'tip_usu': 2};
   bool argumentoLeido = false;
+  String filtro = 'Todos';
 
   @override
   void initState() {
@@ -67,10 +70,10 @@ class _BlogPageState extends State<BlogPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Mi Blog'),
-            Text(
-              'Bienvenido, $nombreUsuario',
-              style: const TextStyle(fontSize: 12),
+            Text(AppTheme.nombreApp, style: AppTheme.titulo(size: 20)),
+            const Text(
+              'Blog gamer',
+              style: TextStyle(fontSize: 12, color: AppColores.textoSuave),
             ),
           ],
         ),
@@ -142,40 +145,77 @@ class _BlogPageState extends State<BlogPage> {
             );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Text(
-                'Bienvenido',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF08245C),
-                ),
+          // Categorías a partir de las etiquetas de las publicaciones.
+          final categorias = <String>{
+            for (final p in posts) ...separarTags(p.tags),
+          }.toList()
+            ..sort();
+
+          final visibles = filtro == 'Todos'
+              ? posts
+              : posts.where((p) => separarTags(p.tags).contains(filtro)).toList();
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Hola, $nombreUsuario',
+                    style: const TextStyle(color: AppColores.textoSuave),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Lo último en videojuegos',
+                    style: AppTheme.titulo(size: 30),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Reseñas, guías y noticias para la comunidad gamer.',
+                    style: TextStyle(color: AppColores.textoSuave),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    height: 36,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: ['Todos', ...categorias]
+                          .map(
+                            (c) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: CategoryChip(
+                                text: c,
+                                selected: filtro == c,
+                                onTap: () => setState(() => filtro = c),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  if (visibles.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('No hay publicaciones en esta categoría.'),
+                    ),
+                  ...visibles.map(
+                    (post) => PostCard(
+                      post: post,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (context) => PostDetailPage(post: post),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 5),
-              const Text(
-                'Descubre nuevas ideas',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ...posts.map(
-                (post) => PostCard(
-                  post: post,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (context) => PostDetailPage(post: post),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+            ),
           );
         },
       ),

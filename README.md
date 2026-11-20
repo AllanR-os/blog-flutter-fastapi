@@ -1,4 +1,4 @@
-# Blog móvil con Flutter, FastAPI y MySQL
+# Respawn · Blog y tienda gamer con Flutter, FastAPI y MySQL
 
 Aplicación móvil de blog desarrollada en **Flutter**, conectada a una **API REST en FastAPI** que almacena la información en **MySQL**.
 
@@ -16,7 +16,14 @@ Aplicación móvil de blog desarrollada en **Flutter**, conectada a una **API RE
 - Registro de usuarios: el administrador elige si el nuevo usuario es Administrador o General; el registro público siempre crea usuarios generales.
 - Agregar publicaciones al blog.
 - Perfil del usuario con actualización de datos.
-- Visualización de publicaciones y sus comentarios.
+- Blog de videojuegos con filtro por categorías.
+- Lectura y creación de comentarios en cada publicación.
+- **Módulo de venta y comercio electrónico (alcance extendido):**
+  - Catálogo de productos y alta de productos por el administrador.
+  - Carrito de compras con control de stock.
+  - Proceso de pago **simulado**: se valida la tarjeta (algoritmo de Luhn, vencimiento y CVV) sin cobro real; solo se guardan los últimos 4 dígitos y el total se calcula en el servidor.
+  - Historial de pedidos del usuario.
+- Tema visual oscuro propio (fuentes Chakra Petch e Inter).
 
 ## Estructura del repositorio
 
@@ -27,6 +34,9 @@ Aplicación móvil de blog desarrollada en **Flutter**, conectada a una **API RE
 │   ├── models.py           Modelos de SQLAlchemy (tablas)
 │   ├── schemas.py          Esquemas de validación (Pydantic)
 │   ├── bd.sql              Script de creación de la base de datos
+│   ├── tienda.sql          Tablas del módulo de tienda
+│   ├── tema_videojuegos.sql Contenido de ejemplo (blog, comentarios, productos)
+│   ├── tienda.py           Rutas de la tienda y pago simulado
 │   └── .env.example        Ejemplo de configuración
 └── flutter_application_3/  Aplicación móvil en Flutter
     └── lib/
@@ -59,7 +69,11 @@ Ejecuta el script `backend_API/bd.sql` en MySQL Workbench (File → Open SQL Scr
 
 ```bash
 mysql -u root -p < backend_API/bd.sql
+mysql -u root -p < backend_API/tienda.sql
+mysql -u root -p < backend_API/tema_videojuegos.sql
 ```
+
+Ejecuta los tres scripts en ese orden (en phpMyAdmin: pestaña **SQL**, pegar y **Continuar**).
 
 ### 2. Backend (API)
 
@@ -90,6 +104,7 @@ En otra terminal:
 
 ```bash
 cd flutter_application_3
+flutter pub add google_fonts
 flutter pub get
 flutter run -d chrome --web-port 60450
 ```
@@ -124,4 +139,16 @@ Usa `"tip_usu": 1` para un administrador y `"tip_usu": 2` para un usuario genera
 | GET | `/blog` | Lista publicaciones |
 | POST | `/blog` | Crea publicación |
 | GET | `/comentarios` | Lista comentarios |
-| POST | `/comentarios` | Crea comentario |
+| POST | `/comentarios` | Crea comentario || GET | `/productos` | Lista productos de la tienda |
+| POST | `/productos` | Crea producto |
+| POST | `/pedidos` | Compra con pago simulado (valida stock y tarjeta) |
+| GET | `/pedidos/usuario/{id}` | Historial de pedidos de un usuario |
+
+### Tarjetas de prueba (pago simulado)
+
+| Número | Resultado |
+|---|---|
+| `4242 4242 4242 4242` | Pago aprobado |
+| `4000 0000 0000 0002` | Pago rechazado por el banco |
+
+Usa cualquier fecha futura (por ejemplo `12/30`) y cualquier CVV de 3 dígitos.
