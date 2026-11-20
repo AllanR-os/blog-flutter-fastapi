@@ -19,6 +19,7 @@ class AdminDrawer extends StatelessWidget {
     '/register',
     '/tienda',
     '/add-producto',
+    '/pedidos-admin',
   };
 
   String get nombre => usuario['nom_usr']?.toString() ?? 'Administrador';
@@ -75,6 +76,8 @@ class AdminDrawer extends StatelessWidget {
             _opcion(context, Icons.storefront, 'Tienda', '/tienda'),
             _opcion(context, Icons.add_business, 'Agregar producto',
                 '/add-producto'),
+            _opcion(context, Icons.receipt_long, 'Pedidos de clientes',
+                '/pedidos-admin'),
             const Spacer(),
             const Divider(),
             ListTile(

@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import '../models/producto_model.dart';
 import '../services/tienda_service.dart';
 
-/// Pantalla del administrador para dar de alta productos en la tienda.
+/// Pantalla del administrador para dar de alta o editar productos en la tienda.
 class AgregarProductoPage extends StatefulWidget {
-  const AgregarProductoPage({super.key});
+  final ProductoModel? producto;
+
+  const AgregarProductoPage({super.key, this.producto});
 
   @override
   State<AgregarProductoPage> createState() => _AgregarProductoPageState();
@@ -22,6 +24,21 @@ class _AgregarProductoPageState extends State<AgregarProductoPage> {
 
   final TiendaService tiendaService = TiendaService();
   bool guardando = false;
+
+  bool get _esEdicion => widget.producto != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final prod = widget.producto;
+    if (prod != null) {
+      nombreController.text = prod.nombre;
+      descripcionController.text = prod.descripcion ?? '';
+      precioController.text = prod.precio.toStringAsFixed(2);
+      stockController.text = '${prod.stock}';
+      imagenController.text = prod.img ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -41,22 +58,35 @@ class _AgregarProductoPageState extends State<AgregarProductoPage> {
     try {
       final descripcion = descripcionController.text.trim();
       final imagen = imagenController.text.trim();
-
-      final producto = await tiendaService.crearProducto(
-        ProductoModel(
-          id: 0,
-          nombre: nombreController.text.trim(),
-          descripcion: descripcion.isEmpty ? null : descripcion,
-          precio: double.parse(precioController.text.trim()),
-          stock: int.parse(stockController.text.trim()),
-          img: imagen.isEmpty ? null : imagen,
-        ),
+      final modelo = ProductoModel(
+        id: widget.producto?.id ?? 0,
+        nombre: nombreController.text.trim(),
+        descripcion: descripcion.isEmpty ? null : descripcion,
+        precio: double.parse(precioController.text.trim()),
+        stock: int.parse(stockController.text.trim()),
+        img: imagen.isEmpty ? null : imagen,
       );
+
+      final producto = _esEdicion
+          ? await tiendaService.actualizarProducto(modelo)
+          : await tiendaService.crearProducto(modelo);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Producto "${producto.nombre}" agregado')),
+        SnackBar(
+          content: Text(
+            _esEdicion
+                ? 'Producto "${producto.nombre}" actualizado'
+                : 'Producto "${producto.nombre}" agregado',
+          ),
+        ),
       );
+
+      if (_esEdicion) {
+        Navigator.pop(context, true);
+        return;
+      }
+
       nombreController.clear();
       descripcionController.clear();
       precioController.clear();
@@ -79,7 +109,9 @@ class _AgregarProductoPageState extends State<AgregarProductoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agregar producto')),
+      appBar: AppBar(
+        title: Text(_esEdicion ? 'Editar producto' : 'Agregar producto'),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 650),
@@ -94,7 +126,7 @@ class _AgregarProductoPageState extends State<AgregarProductoPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Nuevo producto',
+                        _esEdicion ? 'Editar producto' : 'Nuevo producto',
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 20),
@@ -177,7 +209,11 @@ class _AgregarProductoPageState extends State<AgregarProductoPage> {
                         onPressed: guardando ? null : guardar,
                         icon: const Icon(Icons.save),
                         label: Text(
-                          guardando ? 'Guardando...' : 'Guardar producto',
+                          guardando
+                              ? 'Guardando...'
+                              : (_esEdicion
+                                  ? 'Actualizar producto'
+                                  : 'Guardar producto'),
                         ),
                       ),
                     ],

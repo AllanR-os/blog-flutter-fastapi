@@ -7,7 +7,9 @@ import '../services/tienda_service.dart';
 import '../theme/app_theme.dart';
 
 class MisPedidosPage extends StatefulWidget {
-  const MisPedidosPage({super.key});
+  final bool todos;
+
+  const MisPedidosPage({super.key, this.todos = false});
 
   @override
   State<MisPedidosPage> createState() => _MisPedidosPageState();
@@ -24,6 +26,9 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   }
 
   Future<List<PedidoModel>> _cargar() {
+    if (widget.todos) {
+      return tiendaService.obtenerTodosLosPedidos();
+    }
     final id = Sesion.idUsuario;
     if (id == null) {
       return Future.error('Vuelve a iniciar sesión para ver tus pedidos');
@@ -35,7 +40,10 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mis pedidos', style: AppTheme.titulo(size: 20)),
+        title: Text(
+          widget.todos ? 'Pedidos de clientes' : 'Mis pedidos',
+          style: AppTheme.titulo(size: 20),
+        ),
         actions: [
           IconButton(
             tooltip: 'Actualizar',
@@ -65,7 +73,13 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
 
           final pedidos = snapshot.data ?? [];
           if (pedidos.isEmpty) {
-            return const Center(child: Text('Aún no tienes pedidos.'));
+            return Center(
+              child: Text(
+                widget.todos
+                    ? 'Aún no hay pedidos registrados.'
+                    : 'Aún no tienes pedidos.',
+              ),
+            );
           }
 
           return ListView.builder(
@@ -73,6 +87,9 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
             itemCount: pedidos.length,
             itemBuilder: (context, index) {
               final pedido = pedidos[index];
+              final lineaCliente = widget.todos && pedido.cliente != null
+                  ? '${pedido.cliente} (${pedido.correo ?? ''})\n'
+                  : '';
               return Card(
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ExpansionTile(
@@ -82,7 +99,7 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
                   ),
                   title: Text('Pedido #${pedido.id}  ·  ${precioTexto(pedido.total)}'),
                   subtitle: Text(
-                    '${pedido.fechaLegible}  ·  ${pedido.estatus}  ·  '
+                    '$lineaCliente${pedido.fechaLegible}  ·  ${pedido.estatus}  ·  '
                     'Tarjeta •••• ${pedido.ultimos4}',
                   ),
                   children: pedido.detalles

@@ -10,12 +10,23 @@ import 'sesion.dart';
 class TiendaService {
   static const String baseUrl = 'http://127.0.0.1:8000';
 
-  Future<List<ProductoModel>> obtenerProductos() async {
+  Future<List<ProductoModel>> obtenerProductos({
+    String? busqueda,
+    bool soloDisponibles = false,
+  }) async {
+    final params = <String, String>{};
+    if (busqueda != null && busqueda.trim().isNotEmpty) {
+      params['q'] = busqueda.trim();
+    }
+    if (soloDisponibles) {
+      params['solo_disponibles'] = 'true';
+    }
+    final uri = Uri.parse('$baseUrl/productos').replace(
+      queryParameters: params.isEmpty ? null : params,
+    );
+
     final respuesta = await http
-        .get(
-          Uri.parse('$baseUrl/productos'),
-          headers: Sesion.headersAuth,
-        )
+        .get(uri, headers: Sesion.headersAuth)
         .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200) {
@@ -43,6 +54,36 @@ class TiendaService {
       );
     }
     throw Exception(_mensajeError(respuesta));
+  }
+
+  Future<ProductoModel> actualizarProducto(ProductoModel producto) async {
+    final respuesta = await http
+        .put(
+          Uri.parse('$baseUrl/productos/${producto.id}'),
+          headers: Sesion.headersJson,
+          body: jsonEncode(producto.toJsonCrear()),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (respuesta.statusCode == 200) {
+      return ProductoModel.fromJson(
+        jsonDecode(respuesta.body) as Map<String, dynamic>,
+      );
+    }
+    throw Exception(_mensajeError(respuesta));
+  }
+
+  Future<void> eliminarProducto(int productoId) async {
+    final respuesta = await http
+        .delete(
+          Uri.parse('$baseUrl/productos/$productoId'),
+          headers: Sesion.headersAuth,
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (respuesta.statusCode != 200) {
+      throw Exception(_mensajeError(respuesta));
+    }
   }
 
   /// Envía el carrito y los datos de la tarjeta. El pago es simulado.
@@ -77,6 +118,24 @@ class TiendaService {
       );
     }
     throw Exception(_mensajeError(respuesta));
+  }
+
+  Future<List<PedidoModel>> obtenerTodosLosPedidos() async {
+    final respuesta = await http
+        .get(
+          Uri.parse('$baseUrl/pedidos'),
+          headers: Sesion.headersAuth,
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (respuesta.statusCode != 200) {
+      throw Exception(_mensajeError(respuesta));
+    }
+
+    final List<dynamic> datos = jsonDecode(respuesta.body);
+    return datos
+        .map((json) => PedidoModel.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<PedidoModel>> obtenerMisPedidos(int usuarioId) async {

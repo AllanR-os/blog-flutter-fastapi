@@ -38,6 +38,7 @@ class LoginApp extends StatelessWidget {
         '/carrito': (context) => const CarritoPage(),
         '/pago': (context) => const PagoPage(),
         '/mis-pedidos': (context) => const MisPedidosPage(),
+        '/pedidos-admin': (context) => const MisPedidosPage(todos: true),
         '/add-producto': (context) => const AgregarProductoPage(),
       },
     );
