@@ -39,7 +39,6 @@ class DatosPago(BaseModel):
 
 
 class PedidoCrear(BaseModel):
-    usr_id: int
     items: list[ItemCarrito] = Field(min_length=1)
     pago: DatosPago
 
