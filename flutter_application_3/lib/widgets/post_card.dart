@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/post_model.dart';
+import '../services/sesion.dart';
 import '../theme/app_theme.dart';
 import 'portada.dart';
 
@@ -24,6 +25,8 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final etiquetas = separarTags(post.tags);
+    final esPropia =
+        Sesion.idUsuario != null && post.usuarioId == Sesion.idUsuario;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -63,6 +66,46 @@ class PostCard extends StatelessWidget {
                       const SizedBox(height: 10),
                     ],
                     Text(post.titulo, style: AppTheme.titulo(size: 21)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.person_outline,
+                          size: 15,
+                          color: AppColores.textoSuave,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Por ${post.autor}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColores.textoSuave,
+                          ),
+                        ),
+                        if (esPropia) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColores.acento.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'TUYA',
+                              style: TextStyle(
+                                color: AppColores.acento,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       post.descripcion,
@@ -85,7 +128,11 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.arrow_forward, size: 16, color: AppColores.acento),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: AppColores.acento,
+                        ),
                       ],
                     ),
                   ],

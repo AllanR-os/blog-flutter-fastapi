@@ -1,17 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/comentario_model.dart';
+import 'sesion.dart';
 
 class ComentarioService {
   static const String baseUrl = 'http://127.0.0.1:8000';
 
-  Future<List<ComentarioModel>> obtenerComentarios() async {
-    final respuesta = await http.get(
-      Uri.parse('$baseUrl/comentarios'),
+  Future<List<ComentarioModel>> obtenerComentarios({int? blogId}) async {
+    final uri = Uri.parse('$baseUrl/comentarios').replace(
+      queryParameters: blogId != null ? {'blog_id': '$blogId'} : null,
     );
+    final respuesta = await http
+        .get(uri, headers: Sesion.headersAuth)
+        .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200) {
-      throw Exception('Error al consultar comentarios');
+      throw Exception('Error al consultar comentarios (HTTP ${respuesta.statusCode})');
     }
 
     final List<dynamic> datos = jsonDecode(respuesta.body);
@@ -28,11 +32,13 @@ class ComentarioService {
   Future<void> agregarComentario(
     ComentarioModel comentario,
   ) async {
-    final respuesta = await http.post(
-      Uri.parse('$baseUrl/comentarios'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(comentario.toJsonCrear()),
-    );
+    final respuesta = await http
+        .post(
+          Uri.parse('$baseUrl/comentarios'),
+          headers: Sesion.headersJson,
+          body: jsonEncode(comentario.toJsonCrear()),
+        )
+        .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 201) {
       throw Exception(
