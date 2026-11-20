@@ -13,6 +13,7 @@ CREATE TABLE usuario (
     tip_usu INT NOT NULL DEFAULT 1
 );
 
+
 CREATE TABLE blog (
     id_blog INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(150) NOT NULL,

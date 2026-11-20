@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../services/carrito.dart';
+import '../services/sesion.dart';
+
 class AdminDrawer extends StatelessWidget {
   final Map<String, dynamic> usuario;
   final String rutaActual;
@@ -10,12 +13,25 @@ class AdminDrawer extends StatelessWidget {
     required this.rutaActual,
   });
 
+  /// Pantallas sin menú lateral: se abren encima para poder regresar con ←
+  static const Set<String> _rutasEncima = {
+    '/register',
+    '/tienda',
+    '/add-producto',
+  };
+
   String get nombre => usuario['nom_usr']?.toString() ?? 'Administrador';
   String get correo => usuario['mail']?.toString() ?? '';
 
   void _navegar(BuildContext context, String ruta) {
     Navigator.pop(context);
     if (ruta == rutaActual) return;
+
+    if (_rutasEncima.contains(ruta)) {
+      Navigator.pushNamed(context, ruta, arguments: usuario);
+      return;
+    }
+
     Navigator.pushReplacementNamed(
       context,
       ruta,
@@ -46,6 +62,10 @@ class AdminDrawer extends StatelessWidget {
             _opcion(context, Icons.post_add, 'Agregar blog', '/add-blog'),
             _opcion(context, Icons.account_circle_outlined, 'Mi perfil',
                 '/profile'),
+            const Divider(),
+            _opcion(context, Icons.storefront, 'Tienda', '/tienda'),
+            _opcion(context, Icons.add_business, 'Agregar producto',
+                '/add-producto'),
             const Spacer(),
             const Divider(),
             ListTile(
@@ -53,6 +73,8 @@ class AdminDrawer extends StatelessWidget {
               title: const Text('Cerrar sesión',
                   style: TextStyle(color: Colors.red)),
               onTap: () {
+                Sesion.cerrar();
+                Carrito.instancia.vaciar();
                 Navigator.pushNamedAndRemoveUntil(
                   context, '/login', (route) => false,
                 );

@@ -4,6 +4,7 @@ import '../widgets/auth_background.dart';
 import '../widgets/auth_card.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/primary_button.dart';
+import '../services/sesion.dart';
 
 class LoginPage extends StatefulWidget {
 
@@ -63,6 +64,7 @@ class _LoginPageState
       );
 
       if (!mounted) return;
+      Sesion.usuario = usuario;
 
       final int tipoUsuario = (usuario['tip_usu'] as num).toInt();
 

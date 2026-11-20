@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from pwdlib import PasswordHash
 from database import Base, engine, obtener_sesion
 from models import Usuario, Blog, Comentario
+from tienda import router as tienda_router
 from schemas import (
     UsuarioCrear,
     UsuarioActualizar,
@@ -47,6 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(tienda_router)
 
 @app.post("/login", response_model=UsuarioRespuesta)
 def iniciar_sesion(

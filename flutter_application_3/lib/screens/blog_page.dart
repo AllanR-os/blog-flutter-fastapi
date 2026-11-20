@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/post_model.dart';
+import '../services/carrito.dart';
 import '../services/post_service.dart';
+import '../services/sesion.dart';
 import '../widgets/post_card.dart';
 import 'post_detail_page.dart';
 import '../widgets/admin_drawer.dart';
@@ -50,8 +52,16 @@ class _BlogPageState extends State<BlogPage> {
     });
   }
 
+  void cerrarSesion() {
+    Sesion.cerrar();
+    Carrito.instancia.vaciar();
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final esAdmin = (usuarioActual['tip_usu'] as num? ?? 2).toInt() == 1;
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -66,13 +76,24 @@ class _BlogPageState extends State<BlogPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Tienda',
+            icon: const Icon(Icons.storefront),
+            onPressed: () => Navigator.pushNamed(context, '/tienda'),
+          ),
+          IconButton(
             tooltip: 'Actualizar',
             icon: const Icon(Icons.refresh),
             onPressed: recargarPosts,
           ),
+          if (!esAdmin)
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.logout),
+              onPressed: cerrarSesion,
+            ),
         ],
       ),
-      drawer: (usuarioActual['tip_usu'] as num? ?? 2).toInt() == 1
+      drawer: esAdmin
           ? AdminDrawer(usuario: usuarioActual, rutaActual: '/blog')
           : null,
       body: FutureBuilder<List<PostModel>>(
