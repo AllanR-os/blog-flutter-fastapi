@@ -371,6 +371,164 @@ class TestRespawnE2E(unittest.TestCase):
         )
         self.assertEqual(status, 403)
 
+    def test_06_tienda_filtros_gestion_y_ventas_admin(self) -> None:
+        # HU-V6: búsqueda por texto y filtro de disponibilidad
+        status, filtrados = api_request(
+            "GET",
+            "/productos?q=control",
+            token=self.general_token,
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(len(filtrados) >= 1)
+        self.assertTrue(
+            all(
+                "control" in f"{p['nombre']} {p.get('descripcion') or ''}".lower()
+                for p in filtrados
+            )
+        )
+
+        # Crear producto temporal sin ventas (stock 0) para probar filtro y eliminación
+        status, sin_stock = api_request(
+            "POST",
+            "/productos",
+            {
+                "nombre": f"Adaptador temporal {self.sufijo}",
+                "descripcion": "Solo para validar filtro y borrado",
+                "precio": 149.5,
+                "stock": 0,
+            },
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 201, sin_stock)
+        pid_temp = sin_stock["id_prod"]
+
+        status, disponibles = api_request(
+            "GET",
+            "/productos?solo_disponibles=true",
+            token=self.general_token,
+        )
+        self.assertEqual(status, 200)
+        self.assertFalse(any(p["id_prod"] == pid_temp for p in disponibles))
+        self.assertTrue(all(p["stock"] > 0 for p in disponibles))
+
+        # HU-V7: General no puede editar -> 403; Admin sí -> 200
+        status, _ = api_request(
+            "PUT",
+            f"/productos/{pid_temp}",
+            {
+                "nombre": "Intento no autorizado",
+                "precio": 99.0,
+                "stock": 3,
+            },
+            token=self.general_token,
+        )
+        self.assertEqual(status, 403)
+
+        status, editado = api_request(
+            "PUT",
+            f"/productos/{pid_temp}",
+            {
+                "nombre": f"Adaptador editado {self.sufijo}",
+                "descripcion": "Stock actualizado",
+                "precio": 179.0,
+                "stock": 4,
+            },
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 200, editado)
+        self.assertEqual(editado["precio"], 179.0)
+        self.assertEqual(editado["stock"], 4)
+
+        # HU-V8 (Alternativa 1): General no puede eliminar -> 403
+        status, _ = api_request(
+            "DELETE",
+            f"/productos/{pid_temp}",
+            token=self.general_token,
+        )
+        self.assertEqual(status, 403)
+
+        # Producto sin ventas -> DELETE responde 200
+        status, borrado = api_request(
+            "DELETE",
+            f"/productos/{pid_temp}",
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 200, borrado)
+
+        status, _ = api_request(
+            "DELETE",
+            f"/productos/{pid_temp}",
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 404)
+
+        # Producto con ventas registradas -> DELETE responde 409 Conflict
+        status, vendido = api_request(
+            "POST",
+            "/productos",
+            {
+                "nombre": f"Mousepad vendido {self.sufijo}",
+                "descripcion": "Validar integridad referencial",
+                "precio": 250.0,
+                "stock": 3,
+            },
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 201, vendido)
+        pid_vendido = vendido["id_prod"]
+
+        status, pedido = api_request(
+            "POST",
+            "/pedidos",
+            {
+                "items": [{"prod_id": pid_vendido, "cantidad": 1}],
+                "pago": {
+                    "titular": "Carlos Perez",
+                    "numero": "4242 4242 4242 4242",
+                    "vencimiento": "12/30",
+                    "cvv": "123",
+                },
+            },
+            token=self.general_token,
+        )
+        self.assertEqual(status, 201, pedido)
+
+        status, conflicto = api_request(
+            "DELETE",
+            f"/productos/{pid_vendido}",
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 409, conflicto)
+
+        # Pausar venta ajustando stock a 0 vía PUT -> desaparece de solo_disponibles
+        status, pausado = api_request(
+            "PUT",
+            f"/productos/{pid_vendido}",
+            {
+                "nombre": vendido["nombre"],
+                "descripcion": vendido["descripcion"],
+                "precio": 250.0,
+                "stock": 0,
+            },
+            token=self.admin_token,
+        )
+        self.assertEqual(status, 200, pausado)
+        self.assertEqual(pausado["stock"], 0)
+
+        # HU-V9: Consulta global de pedidos solo para Admin
+        status, _ = api_request("GET", "/pedidos")
+        self.assertEqual(status, 401)
+
+        status, _ = api_request("GET", "/pedidos", token=self.general_token)
+        self.assertEqual(status, 403)
+
+        status, todos_pedidos = api_request("GET", "/pedidos", token=self.admin_token)
+        self.assertEqual(status, 200, todos_pedidos)
+        encontrado = [p for p in todos_pedidos if p["id_ped"] == pedido["id_ped"]]
+        self.assertEqual(len(encontrado), 1)
+        self.assertEqual(encontrado[0]["cliente"], self.general["nom_usr"])
+        self.assertEqual(encontrado[0]["correo"], self.general["mail"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

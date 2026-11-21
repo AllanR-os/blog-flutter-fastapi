@@ -26,6 +26,8 @@ class DetallePedidoModel {
 
 class PedidoModel {
   final int id;
+  final String? cliente;
+  final String? correo;
   final String fecha;
   final double total;
   final String estatus;
@@ -34,6 +36,8 @@ class PedidoModel {
 
   PedidoModel({
     required this.id,
+    this.cliente,
+    this.correo,
     required this.fecha,
     required this.total,
     required this.estatus,
@@ -44,6 +48,8 @@ class PedidoModel {
   factory PedidoModel.fromJson(Map<String, dynamic> json) {
     return PedidoModel(
       id: json['id_ped'] as int,
+      cliente: json['cliente'] as String?,
+      correo: json['correo'] as String?,
       fecha: json['fecha'] as String,
       total: (json['total'] as num).toDouble(),
       estatus: json['estatus'] as String,
