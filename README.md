@@ -127,10 +127,14 @@ Las cuentas precargadas en `bd.sql` usan hashes Argon2 válidos con la contrase�
 | `adriana@ejemplo.com` | Adriana Contreras | `1` (Administrador) |
 | `carlos@ejemplo.com` | Carlos Pérez | `2` (General) |
 
-Con la base de datos y la API activas, ejecuta la suite E2E desde `backend_API/`:
+Con la base de datos y la API activas, ejecuta las pruebas automatizadas:
 
 ```bash
+# API E2E (desde backend_API/)
 ./venv/bin/python test_e2e_api.py
+
+# Widgets y lógica de carrito/auth (desde flutter_application_3/)
+flutter test
 ```
 
 ## Endpoints principales
