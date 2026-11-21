@@ -72,6 +72,7 @@ class _UsersPageState extends State<UsersPage> {
       context: context,
       builder: (dialogContext) {
         bool guardando = false;
+        int tipoSeleccionado = usuario?.tipoUsuario ?? 2;
 
         return StatefulBuilder(
           builder: (contextDialogo, actualizarDialogo) {
@@ -110,6 +111,25 @@ class _UsersPageState extends State<UsersPage> {
                           labelText: 'Contraseña',
                         ),
                       ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      initialValue: tipoSeleccionado,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de usuario',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 2, child: Text('General')),
+                        DropdownMenuItem(value: 1, child: Text('Administrador')),
+                      ],
+                      onChanged: guardando
+                          ? null
+                          : (valor) {
+                              if (valor == null) return;
+                              actualizarDialogo(() {
+                                tipoSeleccionado = valor;
+                              });
+                            },
+                    ),
                   ],
                 ),
               ),
@@ -182,7 +202,7 @@ class _UsersPageState extends State<UsersPage> {
                                 direccion: direccion.isEmpty
                                     ? null
                                     : direccion,
-                                tipoUsuario: usuario.tipoUsuario,
+                                tipoUsuario: tipoSeleccionado,
                               );
 
                               await userService.actualizarUsuario(
@@ -197,7 +217,7 @@ class _UsersPageState extends State<UsersPage> {
                                 direccion: direccion.isEmpty
                                     ? null
                                     : direccion,
-                                tipoUsuario: 1,
+                                tipoUsuario: tipoSeleccionado,
                               );
 
                               await userService.agregarUsuario(nuevo);
@@ -367,7 +387,10 @@ class _UsersPageState extends State<UsersPage> {
                       child: Icon(Icons.person),
                     ),
                     title: Text(usuario.nombre),
-                    subtitle: Text(usuario.correo),
+                    subtitle: Text(
+                      '${usuario.correo}  ·  '
+                      '${usuario.tipoUsuario == 1 ? 'Admin' : 'General'}',
+                    ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (opcion) {
                         if (opcion == 'editar') {
