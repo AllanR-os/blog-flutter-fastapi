@@ -184,23 +184,8 @@ class _LoginPageState
                   ),
                 ),
 
-                Align(
-
-                  alignment:
-                      Alignment.centerRight,
-
-                  child: TextButton(
-
-                    onPressed: () {},
-
-                    child: const Text(
-                      '¿Olvidaste tu contraseña?',
-                    ),
-                  ),
-                ),
-
                 const SizedBox(
-                  height: 5,
+                  height: 20,
                 ),
 
                 PrimaryButton(
@@ -216,27 +201,20 @@ class _LoginPageState
                   height: 15,
                 ),
 
-                Row(
-
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-
                     const Text(
                       '¿No tienes cuenta?',
                     ),
-
                     TextButton(
-
                       onPressed: () {
-
                         Navigator.pushNamed(
                           context,
                           '/register',
                         );
                       },
-
                       child: const Text(
                         'Registrarse',
                       ),
