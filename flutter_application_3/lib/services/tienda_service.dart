@@ -5,18 +5,17 @@ import 'package:http/http.dart' as http;
 import '../models/pedido_model.dart';
 import '../models/producto_model.dart';
 import 'carrito.dart';
+import 'sesion.dart';
 
 class TiendaService {
   static const String baseUrl = 'http://127.0.0.1:8000';
 
-  static const Map<String, String> _headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-
   Future<List<ProductoModel>> obtenerProductos() async {
     final respuesta = await http
-        .get(Uri.parse('$baseUrl/productos'))
+        .get(
+          Uri.parse('$baseUrl/productos'),
+          headers: Sesion.headersAuth,
+        )
         .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200) {
@@ -33,7 +32,7 @@ class TiendaService {
     final respuesta = await http
         .post(
           Uri.parse('$baseUrl/productos'),
-          headers: _headers,
+          headers: Sesion.headersJson,
           body: jsonEncode(producto.toJsonCrear()),
         )
         .timeout(const Duration(seconds: 10));
@@ -48,7 +47,6 @@ class TiendaService {
 
   /// Envía el carrito y los datos de la tarjeta. El pago es simulado.
   Future<PedidoModel> pagar({
-    required int usuarioId,
     required List<ItemCarrito> items,
     required String titular,
     required String numeroTarjeta,
@@ -58,9 +56,8 @@ class TiendaService {
     final respuesta = await http
         .post(
           Uri.parse('$baseUrl/pedidos'),
-          headers: _headers,
+          headers: Sesion.headersJson,
           body: jsonEncode({
-            'usr_id': usuarioId,
             'items': items
                 .map((i) => {'prod_id': i.producto.id, 'cantidad': i.cantidad})
                 .toList(),
@@ -84,7 +81,10 @@ class TiendaService {
 
   Future<List<PedidoModel>> obtenerMisPedidos(int usuarioId) async {
     final respuesta = await http
-        .get(Uri.parse('$baseUrl/pedidos/usuario/$usuarioId'))
+        .get(
+          Uri.parse('$baseUrl/pedidos/usuario/$usuarioId'),
+          headers: Sesion.headersAuth,
+        )
         .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200) {

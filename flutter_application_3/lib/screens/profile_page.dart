@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../services/sesion.dart';
 import '../widgets/admin_drawer.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -27,6 +28,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) {
       _usuario = Map<String, dynamic>.from(args);
+    } else if (Sesion.usuario != null) {
+      _usuario = Map<String, dynamic>.from(Sesion.usuario!);
     }
     _nombre.text = _usuario['nom_usr']?.toString() ?? '';
     _correo.text = _usuario['mail']?.toString() ?? '';
@@ -55,12 +58,12 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/usuarios/$id'),
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        headers: Sesion.headersJson,
         body: jsonEncode({
           'nom_usr': _nombre.text.trim(),
           'mail': _correo.text.trim().toLowerCase(),
           'dir_usr': _direccion.text.trim().isEmpty ? null : _direccion.text.trim(),
-          'tip_usu': (_usuario['tip_usu'] as num?)?.toInt() ?? 1,
+          'tip_usu': (_usuario['tip_usu'] as num?)?.toInt() ?? 2,
         }),
       ).timeout(const Duration(seconds: 10));
 
@@ -69,7 +72,10 @@ class _ProfilePageState extends State<ProfilePage> {
         final detail = data is Map ? data['detail'] : null;
         throw Exception(detail?.toString() ?? 'Error HTTP ${response.statusCode}');
       }
-      if (data is Map<String, dynamic>) _usuario = Map<String, dynamic>.from(data);
+      if (data is Map<String, dynamic>) {
+        _usuario = Map<String, dynamic>.from(data);
+        Sesion.usuario = Map<String, dynamic>.from(data);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Perfil actualizado correctamente')),

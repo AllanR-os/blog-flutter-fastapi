@@ -17,12 +17,15 @@ class BlogPage extends StatefulWidget {
 }
 
 class _BlogPageState extends State<BlogPage> {
+  static const String _filtroTodos = 'Todos';
+  static const String _filtroMias = 'Mis publicaciones';
+
   final PostService postService = PostService();
   late Future<List<PostModel>> futurePosts;
   String nombreUsuario = 'Usuario';
   Map<String, dynamic> usuarioActual = {'nom_usr': 'Usuario', 'mail': '', 'tip_usu': 2};
   bool argumentoLeido = false;
-  String filtro = 'Todos';
+  String filtro = _filtroTodos;
 
   @override
   void initState() {
@@ -40,6 +43,9 @@ class _BlogPageState extends State<BlogPage> {
       if (argumento is Map<String, dynamic>) {
         usuarioActual = Map<String, dynamic>.from(argumento);
         nombreUsuario = usuarioActual['nom_usr']?.toString() ?? 'Usuario';
+      } else if (Sesion.usuario != null) {
+        usuarioActual = Map<String, dynamic>.from(Sesion.usuario!);
+        nombreUsuario = Sesion.nombre;
       } else if (argumento is String && argumento.isNotEmpty) {
         nombreUsuario = argumento;
         usuarioActual = {'nom_usr': nombreUsuario, 'mail': '', 'tip_usu': 2};
@@ -55,6 +61,17 @@ class _BlogPageState extends State<BlogPage> {
     });
   }
 
+  Future<void> abrirNuevaPublicacion() async {
+    final creada = await Navigator.pushNamed(
+      context,
+      '/add-blog',
+      arguments: usuarioActual,
+    );
+    if (creada == true && mounted) {
+      recargarPosts();
+    }
+  }
+
   void cerrarSesion() {
     Sesion.cerrar();
     Carrito.instancia.vaciar();
@@ -63,7 +80,7 @@ class _BlogPageState extends State<BlogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final esAdmin = (usuarioActual['tip_usu'] as num? ?? 2).toInt() == 1;
+    final esAdmin = Sesion.esAdmin;
 
     return Scaffold(
       appBar: AppBar(
@@ -99,6 +116,11 @@ class _BlogPageState extends State<BlogPage> {
       drawer: esAdmin
           ? AdminDrawer(usuario: usuarioActual, rutaActual: '/blog')
           : null,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: abrirNuevaPublicacion,
+        icon: const Icon(Icons.post_add),
+        label: const Text('Publicar'),
+      ),
       body: FutureBuilder<List<PostModel>>(
         future: futurePosts,
         builder: (context, snapshot) {
@@ -151,15 +173,24 @@ class _BlogPageState extends State<BlogPage> {
           }.toList()
             ..sort();
 
-          final visibles = filtro == 'Todos'
-              ? posts
-              : posts.where((p) => separarTags(p.tags).contains(filtro)).toList();
+          final List<PostModel> visibles;
+          if (filtro == _filtroTodos) {
+            visibles = posts;
+          } else if (filtro == _filtroMias) {
+            visibles = posts
+                .where((p) => p.usuarioId == Sesion.idUsuario)
+                .toList();
+          } else {
+            visibles = posts
+                .where((p) => separarTags(p.tags).contains(filtro))
+                .toList();
+          }
 
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 84),
                 children: [
                   Text(
                     'Hola, $nombreUsuario',
@@ -180,7 +211,7 @@ class _BlogPageState extends State<BlogPage> {
                     height: 36,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      children: ['Todos', ...categorias]
+                      children: [_filtroTodos, _filtroMias, ...categorias]
                           .map(
                             (c) => Padding(
                               padding: const EdgeInsets.only(right: 8),
@@ -196,9 +227,13 @@ class _BlogPageState extends State<BlogPage> {
                   ),
                   const SizedBox(height: 18),
                   if (visibles.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('No hay publicaciones en esta categoría.'),
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        filtro == _filtroMias
+                            ? 'Aún no has creado publicaciones.'
+                            : 'No hay publicaciones en esta categoría.',
+                      ),
                     ),
                   ...visibles.map(
                     (post) => PostCard(

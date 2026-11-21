@@ -1,0 +1,29 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: respawn_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - respawn_db_data:/var/lib/mysql
+      - ./backend_API/bd.sql:/docker-entrypoint-initdb.d/01-bd.sql:ro
+      - ./backend_API/tienda.sql:/docker-entrypoint-initdb.d/02-tienda.sql:ro
+      - ./backend_API/tema_videojuegos.sql:/docker-entrypoint-initdb.d/03-tema_videojuegos.sql:ro
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: respawn_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  respawn_db_data:

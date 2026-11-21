@@ -7,7 +7,7 @@ class UsuarioCrear(BaseModel):
     mail: str = Field(min_length=5, max_length=150)
     password: str = Field(min_length=8, max_length=128)
     dir_usr: str | None = None
-    tip_usu: int = 1
+    tip_usu: int = Field(default=2, ge=1, le=2)
 
 
 class UsuarioRespuesta(BaseModel):
@@ -18,11 +18,19 @@ class UsuarioRespuesta(BaseModel):
     tip_usu: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LoginRespuesta(UsuarioRespuesta):
+    access_token: str
+    token_type: str = "bearer"
+
+
 class UsuarioActualizar(BaseModel):
     nom_usr: str = Field(min_length=2, max_length=100)
     mail: str = Field(min_length=5, max_length=150)
     dir_usr: str | None = None
-    tip_usu: int = 1
+    tip_usu: int | None = Field(default=None, ge=1, le=2)
+
 
 class BlogCrear(BaseModel):
     titulo: str = Field(min_length=2, max_length=150)
@@ -30,19 +38,21 @@ class BlogCrear(BaseModel):
     img: str | None = Field(default=None, max_length=500)
     tags: str | None = Field(default=None, max_length=255)
 
+
 class BlogRespuesta(BaseModel):
     id_blog: int
     titulo: str
     descripcion: str | None = None
     img: str | None = None
     tags: str | None = None
+    usr_id: int
+    autor: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ComentarioCrear(BaseModel):
     comentario: str = Field(min_length=1)
-    usr_id: int
     blog_id: int
 
 
@@ -53,8 +63,10 @@ class ComentarioRespuesta(BaseModel):
     estatus: int
     usr_id: int
     blog_id: int
+    autor: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class LoginRequest(BaseModel):
     mail: str = Field(min_length=5, max_length=150)

@@ -38,8 +38,7 @@ class _PagoPageState extends State<PagoPage> {
   Future<void> pagar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final usuarioId = Sesion.idUsuario;
-    if (usuarioId == null) {
+    if (!Sesion.tieneToken) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vuelve a iniciar sesión para comprar')),
       );
@@ -50,7 +49,6 @@ class _PagoPageState extends State<PagoPage> {
 
     try {
       final pedido = await tiendaService.pagar(
-        usuarioId: usuarioId,
         items: carrito.items,
         titular: titularController.text,
         numeroTarjeta: numeroController.text,

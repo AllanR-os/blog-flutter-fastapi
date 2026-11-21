@@ -26,6 +26,7 @@ from schemas_tienda import (
     ProductoCrear,
     ProductoRespuesta,
 )
+from seguridad import obtener_usuario_actual, requerir_admin
 
 router = APIRouter(tags=["Tienda"])
 
@@ -120,12 +121,19 @@ def _armar_respuesta(db: Session, pedido: Pedido) -> dict:
 # ---------------------------------------------------------
 
 @router.get("/productos", response_model=list[ProductoRespuesta])
-def listar_productos(db: Session = Depends(obtener_sesion)):
+def listar_productos(
+    _: Usuario = Depends(obtener_usuario_actual),
+    db: Session = Depends(obtener_sesion),
+):
     return db.scalars(select(Producto).order_by(Producto.id_prod)).all()
 
 
 @router.post("/productos", response_model=ProductoRespuesta, status_code=201)
-def crear_producto(datos: ProductoCrear, db: Session = Depends(obtener_sesion)):
+def crear_producto(
+    datos: ProductoCrear,
+    _: Usuario = Depends(requerir_admin),
+    db: Session = Depends(obtener_sesion),
+):
     producto = Producto(
         nombre=datos.nombre.strip(),
         descripcion=datos.descripcion.strip() if datos.descripcion else None,
@@ -144,10 +152,11 @@ def crear_producto(datos: ProductoCrear, db: Session = Depends(obtener_sesion)):
 # ---------------------------------------------------------
 
 @router.post("/pedidos", response_model=PedidoRespuesta, status_code=201)
-def crear_pedido(datos: PedidoCrear, db: Session = Depends(obtener_sesion)):
-    if db.get(Usuario, datos.usr_id) is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
+def crear_pedido(
+    datos: PedidoCrear,
+    actual: Usuario = Depends(obtener_usuario_actual),
+    db: Session = Depends(obtener_sesion),
+):
     # Junta cantidades si el mismo producto viene repetido.
     cantidades: dict[int, int] = {}
     for item in datos.items:
@@ -172,7 +181,7 @@ def crear_pedido(datos: PedidoCrear, db: Session = Depends(obtener_sesion)):
     ultimos4 = validar_pago(datos.pago)
 
     pedido = Pedido(
-        usr_id=datos.usr_id,
+        usr_id=actual.id_usr,
         total=total,
         estatus="PAGADO",
         ultimos4=ultimos4,
@@ -198,7 +207,17 @@ def crear_pedido(datos: PedidoCrear, db: Session = Depends(obtener_sesion)):
 
 
 @router.get("/pedidos/usuario/{usr_id}", response_model=list[PedidoRespuesta])
-def pedidos_de_usuario(usr_id: int, db: Session = Depends(obtener_sesion)):
+def pedidos_de_usuario(
+    usr_id: int,
+    actual: Usuario = Depends(obtener_usuario_actual),
+    db: Session = Depends(obtener_sesion),
+):
+    if actual.tip_usu != 1 and actual.id_usr != usr_id:
+        raise HTTPException(
+            status_code=403,
+            detail="No tienes permiso para consultar los pedidos de otro usuario",
+        )
+
     pedidos = db.scalars(
         select(Pedido)
         .where(Pedido.usr_id == usr_id)

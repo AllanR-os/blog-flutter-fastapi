@@ -1,19 +1,21 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
+import 'sesion.dart';
 
 class UserService {
   static const String baseUrl = 'http://127.0.0.1:8000';
+
   Future<List<UserModel>> obtenerUsuarios() async {
     final respuesta = await http
-        .get(Uri.parse('$baseUrl/usuarios'))
+        .get(
+          Uri.parse('$baseUrl/usuarios'),
+          headers: Sesion.headersAuth,
+        )
         .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200) {
-      throw Exception(
-        'Error al consultar usuarios: ${respuesta.statusCode}',
-      );
+      throw Exception(_mensajeError(respuesta));
     }
 
     final List<dynamic> datos = jsonDecode(respuesta.body);
@@ -28,13 +30,17 @@ class UserService {
   }
 
   Future<UserModel> agregarUsuario(UserModel usuario) async {
+    final headers = Sesion.esAdmin
+        ? Sesion.headersJson
+        : const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          };
+
     final respuesta = await http
         .post(
           Uri.parse('$baseUrl/usuarios'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
+          headers: headers,
           body: jsonEncode(usuario.toJsonCrear()),
         )
         .timeout(const Duration(seconds: 10));
@@ -52,10 +58,7 @@ class UserService {
     final respuesta = await http
         .put(
           Uri.parse('$baseUrl/usuarios/${usuario.id}'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
+          headers: Sesion.headersJson,
           body: jsonEncode({
             'nom_usr': usuario.nombre,
             'mail': usuario.correo,
@@ -76,7 +79,10 @@ class UserService {
 
   Future<void> eliminarUsuario(int id) async {
     final respuesta = await http
-        .delete(Uri.parse('$baseUrl/usuarios/$id'))
+        .delete(
+          Uri.parse('$baseUrl/usuarios/$id'),
+          headers: Sesion.headersAuth,
+        )
         .timeout(const Duration(seconds: 10));
 
     if (respuesta.statusCode != 200 &&

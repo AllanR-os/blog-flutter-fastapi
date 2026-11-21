@@ -65,7 +65,7 @@ class _LoginPageState
       );
 
       if (!mounted) return;
-      Sesion.usuario = usuario;
+      Sesion.iniciar(usuario);
 
       final int tipoUsuario = (usuario['tip_usu'] as num).toInt();
 
@@ -74,14 +74,14 @@ class _LoginPageState
           context,
           '/users',
           (route) => false,
-          arguments: usuario,
+          arguments: Sesion.usuario,
         );
       } else if (tipoUsuario == 2) {
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/blog',
           (route) => false,
-          arguments: usuario,
+          arguments: Sesion.usuario,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

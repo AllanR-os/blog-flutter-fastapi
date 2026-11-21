@@ -4,18 +4,9 @@ import '../models/comentario_model.dart';
 import '../models/post_model.dart';
 import '../services/comentario_service.dart';
 import '../services/sesion.dart';
-import '../services/user_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/portada.dart';
 import '../widgets/post_card.dart';
-
-/// Comentario listo para mostrarse, con el nombre de su autor.
-class _ComentarioVista {
-  final ComentarioModel datos;
-  final String autor;
-
-  _ComentarioVista(this.datos, this.autor);
-}
 
 class PostDetailPage extends StatefulWidget {
   final PostModel post;
@@ -31,10 +22,9 @@ class PostDetailPage extends StatefulWidget {
 
 class _PostDetailPageState extends State<PostDetailPage> {
   final ComentarioService comentarioService = ComentarioService();
-  final UserService userService = UserService();
   final TextEditingController comentarioController = TextEditingController();
 
-  late Future<List<_ComentarioVista>> futuroComentarios;
+  late Future<List<ComentarioModel>> futuroComentarios;
   bool enviando = false;
 
   @override
@@ -49,20 +39,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
     super.dispose();
   }
 
-  /// Lee los comentarios de esta publicación y les pone el nombre del autor.
-  Future<List<_ComentarioVista>> _cargarComentarios() async {
-    final comentarios = await comentarioService.obtenerComentarios();
-    final usuarios = await userService.obtenerUsuarios();
-    final nombres = {for (final u in usuarios) u.id: u.nombre};
-
-    final deEstePost = comentarios
-        .where((c) => c.blogId == widget.post.id && c.estatus == 1)
-        .toList()
-      ..sort((a, b) => b.id.compareTo(a.id)); // más recientes primero
-
-    return deEstePost
-        .map((c) => _ComentarioVista(c, nombres[c.usuarioId] ?? 'Jugador'))
-        .toList();
+  /// Consulta los comentarios activos de esta publicación con su autor incluido.
+  Future<List<ComentarioModel>> _cargarComentarios() async {
+    final comentarios = await comentarioService.obtenerComentarios(
+      blogId: widget.post.id,
+    );
+    return comentarios.where((c) => c.estatus == 1).toList();
   }
 
   void _recargar() {
@@ -76,7 +58,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     final usuarioId = Sesion.idUsuario;
 
     if (texto.isEmpty) return;
-    if (usuarioId == null) {
+    if (usuarioId == null || !Sesion.tieneToken) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Inicia sesión para comentar')),
       );
@@ -94,6 +76,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
           estatus: 1,
           usuarioId: usuarioId,
           blogId: widget.post.id,
+          autor: Sesion.nombre,
         ),
       );
       comentarioController.clear();
@@ -124,6 +107,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Widget build(BuildContext context) {
     final post = widget.post;
     final etiquetas = separarTags(post.tags);
+    final esPropia =
+        Sesion.idUsuario != null && post.usuarioId == Sesion.idUsuario;
 
     return Scaffold(
       appBar: AppBar(
@@ -159,6 +144,46 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         const SizedBox(height: 10),
                       ],
                       Text(post.titulo, style: AppTheme.titulo(size: 30)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.person_outline,
+                            size: 16,
+                            color: AppColores.textoSuave,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Por ${post.autor}',
+                            style: const TextStyle(
+                              color: AppColores.textoSuave,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (esPropia) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColores.acento.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'TUYA',
+                                style: TextStyle(
+                                  color: AppColores.acento,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 18),
                       Text(
                         post.descripcion.isNotEmpty
@@ -182,7 +207,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
 
   Widget _seccionComentarios() {
-    return FutureBuilder<List<_ComentarioVista>>(
+    return FutureBuilder<List<ComentarioModel>>(
       future: futuroComentarios,
       builder: (context, snapshot) {
         final comentarios = snapshot.data ?? [];
@@ -264,7 +289,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     );
   }
 
-  Widget _tarjetaComentario(_ComentarioVista c) {
+  Widget _tarjetaComentario(ComentarioModel c) {
     final inicial = c.autor.isNotEmpty ? c.autor[0].toUpperCase() : '?';
 
     return Padding(
@@ -296,7 +321,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _fechaLegible(c.datos.fecha),
+                      _fechaLegible(c.fecha),
                       style: const TextStyle(
                         color: AppColores.textoSuave,
                         fontSize: 12,
@@ -305,7 +330,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(c.datos.comentario, style: const TextStyle(height: 1.5)),
+                Text(c.comentario, style: const TextStyle(height: 1.5)),
               ],
             ),
           ),

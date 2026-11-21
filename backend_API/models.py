@@ -3,6 +3,8 @@ from sqlalchemy import (
     DateTime, ForeignKey, func
 )
 from database import Base
+
+
 class Usuario(Base):
     __tablename__ = "usuario"
 
@@ -11,16 +13,27 @@ class Usuario(Base):
     mail = Column(String(150), unique=True, nullable=False)
     pass_hash = Column("pass", String(255), nullable=False)
     dir_usr = Column(String(200), nullable=True)
-    tip_usu = Column(Integer, nullable=False, default=1)
+    tip_usu = Column(Integer, nullable=False, default=2)
+
+
 class Blog(Base):
     __tablename__ = "blog"
+
     id_blog = Column(Integer, primary_key=True, index=True)
     titulo = Column(String(150), nullable=False)
     descripcion = Column("desc", Text, nullable=True)
     img = Column(String(500), nullable=True)
     tags = Column(String(255), nullable=True)
+    usr_id = Column(
+        Integer,
+        ForeignKey("usuario.id_usr"),
+        nullable=False,
+    )
+
+
 class Comentario(Base):
     __tablename__ = "comentarios"
+
     id_com = Column(Integer, primary_key=True, index=True)
     comentario = Column(Text, nullable=False)
     fecha = Column(

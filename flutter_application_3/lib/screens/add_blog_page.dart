@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/post_service.dart';
+import '../services/sesion.dart';
 import '../widgets/admin_drawer.dart';
 
 class AddBlogPage extends StatefulWidget {
@@ -23,7 +24,11 @@ class _AddBlogPageState extends State<AddBlogPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) _usuario = Map<String, dynamic>.from(args);
+    if (args is Map<String, dynamic>) {
+      _usuario = Map<String, dynamic>.from(args);
+    } else if (Sesion.usuario != null) {
+      _usuario = Map<String, dynamic>.from(Sesion.usuario!);
+    }
   }
 
   @override
@@ -53,10 +58,17 @@ class _AddBlogPageState extends State<AddBlogPage> {
       _descripcion.clear();
       _imagen.clear();
       _tags.clear();
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar: $e')),
+        SnackBar(
+          content: Text(
+            'No se pudo guardar: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _guardando = false);
@@ -65,10 +77,14 @@ class _AddBlogPageState extends State<AddBlogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final nombre = _usuario['nom_usr']?.toString() ?? 'Administrador';
+    final nombre = _usuario['nom_usr']?.toString() ?? Sesion.nombre;
+    final mostrarDrawer = Sesion.esAdmin && !Navigator.canPop(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Agregar blog')),
-      drawer: AdminDrawer(usuario: _usuario, rutaActual: '/add-blog'),
+      drawer: mostrarDrawer
+          ? AdminDrawer(usuario: _usuario, rutaActual: '/add-blog')
+          : null,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),
@@ -82,10 +98,12 @@ class _AddBlogPageState extends State<AddBlogPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Nueva publicación',
-                        style: Theme.of(context).textTheme.headlineSmall),
+                      Text(
+                        'Nueva publicación',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                       const SizedBox(height: 6),
-                      Text('Administrador: $nombre'),
+                      Text('Autor: $nombre'),
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: _titulo,
@@ -94,7 +112,8 @@ class _AddBlogPageState extends State<AddBlogPage> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Ingresa el título' : null,
+                            ? 'Ingresa el título'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -106,7 +125,8 @@ class _AddBlogPageState extends State<AddBlogPage> {
                           alignLabelWithHint: true,
                         ),
                         validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Ingresa la descripción' : null,
+                            ? 'Ingresa la descripción'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -121,7 +141,7 @@ class _AddBlogPageState extends State<AddBlogPage> {
                         controller: _tags,
                         decoration: const InputDecoration(
                           labelText: 'Etiquetas (opcional)',
-                          hintText: 'flutter, tecnología, móvil',
+                          hintText: 'Guías, Indie, PC',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -130,10 +150,14 @@ class _AddBlogPageState extends State<AddBlogPage> {
                         onPressed: _guardando ? null : _guardar,
                         icon: _guardando
                             ? const SizedBox(
-                                width: 18, height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2))
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
                             : const Icon(Icons.save),
-                        label: Text(_guardando ? 'Guardando...' : 'Guardar publicación'),
+                        label: Text(
+                          _guardando ? 'Guardando...' : 'Guardar publicación',
+                        ),
                       ),
                     ],
                   ),

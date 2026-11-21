@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/sesion.dart';
 import '../services/user_service.dart';
 import '../widgets/auth_background.dart';
 import '../widgets/auth_card.dart';
@@ -38,10 +39,12 @@ class _RegisterPageState extends State<RegisterPage> {
     super.didChangeDependencies();
     if (argumentoLeido) return;
 
-    final argumento = ModalRoute.of(context)?.settings.arguments;
-    if (argumento is Map<String, dynamic>) {
-      usuarioActual = Map<String, dynamic>.from(argumento);
-      esAdmin = (usuarioActual['tip_usu'] as num? ?? 2).toInt() == 1;
+    esAdmin = Sesion.esAdmin;
+    if (esAdmin && Sesion.usuario != null) {
+      usuarioActual = Map<String, dynamic>.from(Sesion.usuario!);
+    } else {
+      usuarioActual = {};
+      tipoUsuario = 2;
     }
     argumentoLeido = true;
   }
