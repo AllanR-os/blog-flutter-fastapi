@@ -10,15 +10,15 @@ Aplicación móvil y web de blog comunitario y tienda gamer desarrollada en **Fl
 - Inicio de sesión seguro con validación de credenciales contra MySQL y emisión de token **JWT (`HS256`)**.
 - Contraseñas encriptadas con **Argon2** (`pwdlib`); nunca se almacenan ni se devuelven en texto plano.
 - Control de acceso por rol (**RBAC**) aplicado en servidor y reflejado en la interfaz:
-  - **Tipo 1 (Administrador):** gestión de usuarios, alta de administradores desde `/register`, alta de productos en tienda, perfil, blog y compras.
+  - **Tipo 1 (Administrador):** gestión de usuarios, alta de administradores desde `/register`, gestión de productos (alta, edición y baja segura) y consulta global de pedidos, además de perfil, blog y compras.
   - **Tipo 2 (General):** registro público forzado a rol General en API y UI, lectura y publicación de entradas en el blog, comentarios, perfil propio y tienda.
 - Blog comunitario con autoría (`usr_id`), filtro por categorías y vista de **Mis publicaciones** frente a entradas de otros usuarios.
 - Lectura y creación de comentarios en cada publicación con el nombre del autor resuelto en servidor.
 - **Módulo de venta y comercio electrónico (alcance extendido):**
-  - Catálogo de productos y alta de productos por el administrador.
+  - Catálogo de productos con búsqueda por texto, filtro `"Solo disponibles"` y gestión administrativa (alta, edición de precio/stock y baja controlada con `409 Conflict` si el producto tiene pedidos).
   - Carrito de compras con control de stock.
   - Proceso de pago **simulado**: valida tarjeta (algoritmo de Luhn, vencimiento y CVV) sin cobro real, guarda únicamente los últimos 4 dígitos y calcula el total en el servidor.
-  - Historial de pedidos protegido por propietario o administrador.
+  - Historial de pedidos propio y consulta global de pedidos de clientes para el administrador.
 - Tema visual oscuro propio (fuentes Chakra Petch e Inter).
 
 ## Estructura del repositorio
@@ -127,10 +127,14 @@ Las cuentas precargadas en `bd.sql` usan hashes Argon2 válidos con la contrase�
 | `adriana@ejemplo.com` | Adriana Contreras | `1` (Administrador) |
 | `carlos@ejemplo.com` | Carlos Pérez | `2` (General) |
 
-Con la base de datos y la API activas, ejecuta la suite E2E desde `backend_API/`:
+Con la base de datos y la API activas, ejecuta las pruebas automatizadas:
 
 ```bash
+# API E2E (desde backend_API/)
 ./venv/bin/python test_e2e_api.py
+
+# Widgets y lógica de carrito/auth (desde flutter_application_3/)
+flutter test
 ```
 
 ## Endpoints principales
@@ -149,9 +153,12 @@ Con la base de datos y la API activas, ejecuta la suite E2E desde `backend_API/`
 | `POST` | `/blog` | Autenticado | Crea publicación asociada al usuario autenticado |
 | `GET` | `/comentarios` | Autenticado | Lista comentarios con `autor` (filtro opcional `?blog_id=`) |
 | `POST` | `/comentarios` | Autenticado | Crea comentario asociado al usuario autenticado |
-| `GET` | `/productos` | Autenticado | Lista el catálogo de la tienda |
+| `GET` | `/productos` | Autenticado | Lista el catálogo (filtros opcionales `?q=` y `?solo_disponibles=true`) |
 | `POST` | `/productos` | Solo Admin | Registra un producto nuevo |
+| `PUT` | `/productos/{id}` | Solo Admin | Edita datos, precio o stock de un producto |
+| `DELETE` | `/productos/{id}` | Solo Admin | Elimina producto sin ventas (`409` si tiene pedidos registrados) |
 | `POST` | `/pedidos` | Autenticado | Procesa compra con pago simulado, valida stock y tarjeta |
+| `GET` | `/pedidos` | Solo Admin | Lista todos los pedidos con nombre y correo del comprador |
 | `GET` | `/pedidos/usuario/{id}` | Propio / Admin | Consulta historial de pedidos del usuario |
 
 ### Tarjetas de prueba (pago simulado)

@@ -13,7 +13,7 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from database import obtener_sesion
@@ -23,6 +23,7 @@ from schemas_tienda import (
     DatosPago,
     PedidoCrear,
     PedidoRespuesta,
+    ProductoActualizar,
     ProductoCrear,
     ProductoRespuesta,
 )
@@ -86,7 +87,12 @@ def validar_pago(pago: DatosPago) -> str:
     return numero[-4:]
 
 
-def _armar_respuesta(db: Session, pedido: Pedido) -> dict:
+def _armar_respuesta(
+    db: Session,
+    pedido: Pedido,
+    cliente: str | None = None,
+    correo: str | None = None,
+) -> dict:
     """Junta el pedido con sus productos para devolverlo a la app."""
     filas = db.execute(
         select(DetallePedido, Producto.nombre)
@@ -108,6 +114,9 @@ def _armar_respuesta(db: Session, pedido: Pedido) -> dict:
 
     return {
         "id_ped": pedido.id_ped,
+        "usr_id": pedido.usr_id,
+        "cliente": cliente,
+        "correo": correo,
         "fecha": pedido.fecha,
         "total": pedido.total,
         "estatus": pedido.estatus,
@@ -122,10 +131,23 @@ def _armar_respuesta(db: Session, pedido: Pedido) -> dict:
 
 @router.get("/productos", response_model=list[ProductoRespuesta])
 def listar_productos(
+    q: str | None = None,
+    solo_disponibles: bool = False,
     _: Usuario = Depends(obtener_usuario_actual),
     db: Session = Depends(obtener_sesion),
 ):
-    return db.scalars(select(Producto).order_by(Producto.id_prod)).all()
+    consulta = select(Producto)
+    if q and q.strip():
+        patron = f"%{q.strip()}%"
+        consulta = consulta.where(
+            or_(
+                Producto.nombre.ilike(patron),
+                Producto.descripcion.ilike(patron),
+            )
+        )
+    if solo_disponibles:
+        consulta = consulta.where(Producto.stock > 0)
+    return db.scalars(consulta.order_by(Producto.id_prod)).all()
 
 
 @router.post("/productos", response_model=ProductoRespuesta, status_code=201)
@@ -145,6 +167,56 @@ def crear_producto(
     db.commit()
     db.refresh(producto)
     return producto
+
+
+@router.put("/productos/{prod_id}", response_model=ProductoRespuesta)
+def actualizar_producto(
+    prod_id: int,
+    datos: ProductoActualizar,
+    _: Usuario = Depends(requerir_admin),
+    db: Session = Depends(obtener_sesion),
+):
+    producto = db.get(Producto, prod_id)
+    if producto is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    producto.nombre = datos.nombre.strip()
+    producto.descripcion = datos.descripcion.strip() if datos.descripcion else None
+    producto.precio = Decimal(str(datos.precio))
+    producto.stock = datos.stock
+    producto.img = datos.img.strip() if datos.img and datos.img.strip() else None
+    db.commit()
+    db.refresh(producto)
+    return producto
+
+
+@router.delete("/productos/{prod_id}")
+def eliminar_producto(
+    prod_id: int,
+    _: Usuario = Depends(requerir_admin),
+    db: Session = Depends(obtener_sesion),
+):
+    producto = db.get(Producto, prod_id)
+    if producto is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    tiene_ventas = (
+        db.scalar(
+            select(func.count(DetallePedido.id_det)).where(
+                DetallePedido.prod_id == prod_id
+            )
+        )
+        or 0
+    )
+    if tiene_ventas > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="El producto tiene pedidos registrados; ajusta el stock a 0 para pausar su venta",
+        )
+
+    db.delete(producto)
+    db.commit()
+    return {"mensaje": "Producto eliminado correctamente"}
 
 
 # ---------------------------------------------------------
@@ -204,6 +276,22 @@ def crear_pedido(
     db.commit()
     db.refresh(pedido)
     return _armar_respuesta(db, pedido)
+
+
+@router.get("/pedidos", response_model=list[PedidoRespuesta])
+def listar_todos_los_pedidos(
+    _: Usuario = Depends(requerir_admin),
+    db: Session = Depends(obtener_sesion),
+):
+    filas = db.execute(
+        select(Pedido, Usuario.nom_usr, Usuario.mail)
+        .join(Usuario, Usuario.id_usr == Pedido.usr_id)
+        .order_by(Pedido.id_ped.desc())
+    ).all()
+    return [
+        _armar_respuesta(db, pedido, cliente=nombre, correo=correo)
+        for pedido, nombre, correo in filas
+    ]
 
 
 @router.get("/pedidos/usuario/{usr_id}", response_model=list[PedidoRespuesta])

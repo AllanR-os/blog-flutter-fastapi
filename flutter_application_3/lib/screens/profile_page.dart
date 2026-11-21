@@ -92,9 +92,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final mostrarDrawer = Sesion.esAdmin && !Navigator.canPop(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Mi perfil')),
-      drawer: AdminDrawer(usuario: _usuario, rutaActual: '/profile'),
+      drawer: mostrarDrawer
+          ? AdminDrawer(usuario: _usuario, rutaActual: '/profile')
+          : null,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 650),

@@ -72,6 +72,20 @@ class _BlogPageState extends State<BlogPage> {
     }
   }
 
+  Future<void> abrirPerfil() async {
+    await Navigator.pushNamed(
+      context,
+      '/profile',
+      arguments: usuarioActual,
+    );
+    if (mounted && Sesion.usuario != null) {
+      setState(() {
+        usuarioActual = Map<String, dynamic>.from(Sesion.usuario!);
+        nombreUsuario = Sesion.nombre;
+      });
+    }
+  }
+
   void cerrarSesion() {
     Sesion.cerrar();
     Carrito.instancia.vaciar();
@@ -105,6 +119,12 @@ class _BlogPageState extends State<BlogPage> {
             icon: const Icon(Icons.refresh),
             onPressed: recargarPosts,
           ),
+          if (!esAdmin)
+            IconButton(
+              tooltip: 'Mi perfil',
+              icon: const Icon(Icons.account_circle_outlined),
+              onPressed: abrirPerfil,
+            ),
           if (!esAdmin)
             IconButton(
               tooltip: 'Cerrar sesión',

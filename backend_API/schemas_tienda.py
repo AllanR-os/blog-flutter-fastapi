@@ -13,6 +13,10 @@ class ProductoCrear(BaseModel):
     img: str | None = Field(default=None, max_length=500)
 
 
+class ProductoActualizar(ProductoCrear):
+    pass
+
+
 class ProductoRespuesta(BaseModel):
     id_prod: int
     nombre: str
@@ -53,6 +57,9 @@ class DetalleRespuesta(BaseModel):
 
 class PedidoRespuesta(BaseModel):
     id_ped: int
+    usr_id: int | None = None
+    cliente: str | None = None
+    correo: str | None = None
     fecha: datetime
     total: float
     estatus: str
